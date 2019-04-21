@@ -34,7 +34,8 @@
       const bill = await fetch('/billquery').then(resp => resp.json())
       const keys = Object.keys(bill)
       const date = keys.map(t => new Date(Number(bill[t].ts)).format('yy-MM-dd'))
-      const data = keys.map(t => Math.floor(Number(bill[t].dayQc)))
+      const dataQc = keys.map(t => (Number(bill[t].dayQc)).toFixed(2))
+      const dataBrc = keys.map(t => (Number(bill[t].dayBrc)).toFixed(2))
       // 基于准备好的dom，初始化echarts实例
       const myChart = echarts.init(document.getElementById('main'))
       // 指定图表的配置项和数据
@@ -47,7 +48,10 @@
         },
         title: {
           left: 'center',
-          text: '大数据量面积图',
+          text: '超级富豪每日产量',
+        },
+        grid: {
+          show: false,
         },
         toolbox: {
           feature: {
@@ -58,19 +62,38 @@
             saveAsImage: {}
           }
         },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'cross',
+            animation: true,
+            label: {
+              backgroundColor: '#505765'
+            }
+          }
+        },
         xAxis: {
           type: 'category',
           boundaryGap: false,
           data: date
         },
-        yAxis: {
+        yAxis: [{
+          name: 'QC/日',
           type: 'value',
-          boundaryGap: [0, '100%']
-        },
+          scale: true,
+          boundaryGap: ['50%', '0%']
+        }, {
+          name: 'BRC/日',
+          type: 'value',
+          boundaryGap: ['0%', '80%'],
+          splitLine: {
+            show: false
+          },
+        }],
         dataZoom: [{
           type: 'inside',
-          start: 0,
-          end: 10
+          start: 85,
+          end: 100
         }, {
           start: 0,
           end: 10,
@@ -84,8 +107,12 @@
             shadowOffsetY: 2
           }
         }],
+        legend: {
+          data: ['QC/日', 'BRC/日'],
+          x: 'left'
+        },
         series: [{
-          name: '日QC',
+          name: 'QC/日',
           type: 'line',
           smooth: true,
           symbol: 'qc',
@@ -102,8 +129,28 @@
               color: 'rgb(255, 70, 131)'
             }])
           },
-          data: data
-        }]
+          data: dataQc
+        }, {
+          name: 'BRC/日',
+          type: 'line',
+          yAxisIndex: 1,
+          smooth: true,
+          symbol: 'brc',
+          sampling: 'average',
+          itemStyle: {
+            color: 'rgb(70, 80, 255)'
+          },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+              offset: 0,
+              color: 'rgb(158, 68, 255)'
+            }, {
+              offset: 1,
+              color: 'rgb(70, 131, 255)'
+            }])
+          },
+          data: dataBrc
+        }, ]
       };
       // 使用刚指定的配置项和数据显示图表。
       myChart.setOption(option);
